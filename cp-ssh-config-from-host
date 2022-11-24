@@ -1,0 +1,32 @@
+#!/bin/zsh
+
+#set -x
+
+# exit immediately on errors
+set -e
+
+cd /mnt/c
+
+user_profile_win_path=$(cmd.exe /C "echo %USERPROFILE%" | tr -d '\r' | sed 's/\\/\\\\/g')
+
+ssh_config_dir_path=$(wsl.exe wslpath `echo -E "$user_profile_win_path"`)/.ssh
+
+if test -d "$ssh_config_dir_path"; then
+	echo "Using SSH config directory $ssh_config_dir_path as source."
+else
+	echo "** error: Derived source SSH config directory $ssh_config_dir_path does not exist is isn't a directory."
+	exit 1
+fi
+
+echo
+echo "-- ensuring directory '$HOME/.ssh' exists..." 
+mkdir -vp "$HOME/.ssh"
+
+echo
+echo "-- copying contents of '$ssh_config_dir_path' to '$HOME/.ssh'..."
+cp -av "$ssh_config_dir_path"/* "$HOME/.ssh/."
+
+echo
+echo "-- setting restrictive permissions on '$HOME/.ssh'..."
+chmod -vR go-rwx "$HOME/.ssh"
+
